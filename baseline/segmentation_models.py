@@ -72,7 +72,7 @@ def UNET(input_shape=(256,256,3), conv_block=conv2d_block, n_filters=32, dropout
     u9 = Dropout(dropout)(u9)
     c9 = conv_block(u9, n_filters * 1,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
 
-    outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
+    outputs = Conv2D(3, (1, 1), activation='sigmoid')(c9)
     model = Model(inputs=[tensor], outputs=[outputs])
 
     # Return model architecture
