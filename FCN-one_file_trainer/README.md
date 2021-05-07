@@ -11,4 +11,6 @@ The first few blocks of code in run_one_file_predict.ipynb processes the data, s
 #### Run
 run_one_file_predict.ipynb contains the code to execute the training. Now I only made it to train two images, since it takes some time to train each(about 5 minutes per image on datahub with 32GB RAM). I tried to train 3 images and the kernel died. 
 
-    
+#### Reference
+
+Original github repository :https://github.com/hellochick/semantic-segmentation-tensorflow
