@@ -79,7 +79,7 @@ def UNET(input_shape=(256,256,3), conv_block=conv2d_block, n_filters=32, dropout
     return model
 
 
-def UNET_plusplus(input_shape=(128,128,3), conv_block=conv2d_block, n_filters=32, dropout=0.5, padding='same', batch_norm=True):
+def UNET_plusplus(input_shape=(256,256,3), conv_block=conv2d_block, n_filters=32, dropout=0.5, padding='same', batch_norm=True):
     """
     UNET++ architecture as originally outlined in https://arxiv.org/pdf/1807.10165.pdf with modifications 
     to fit different input dimensions. 
@@ -107,9 +107,8 @@ def UNET_plusplus(input_shape=(128,128,3), conv_block=conv2d_block, n_filters=32
 
     tensor = Input(shape=input_shape)
 
-    print('Contracting Path')
+    print('Backbone')
     
-    # First Diagonal
     c00 = conv_block(tensor, n_filters * 1, filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
     p00 = MaxPooling2D((2, 2))(c00)
     p00 = Dropout(dropout)(p00)
@@ -128,63 +127,63 @@ def UNET_plusplus(input_shape=(128,128,3), conv_block=conv2d_block, n_filters=32
 
     c40 = conv_block(p30, n_filters * 16, filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
     
-    #Second Diagonal
+    print('First Up Path')
     
-    u01 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c10)
+    u01 = Conv2DTranspose(n_filters * 1, (3, 3), strides=(2, 2), padding=padding)(c10)
     u01 = concatenate([u01, c00])
     u01 = Dropout(dropout)(u01)
-    c01 = conv_block(u01, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+    c01 = conv_block(u01, n_filters * 1,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
     
-    u11 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c20)
+    print('Second Up Path')
+
+    u11 = Conv2DTranspose(n_filters * 2, (3, 3), strides=(2, 2), padding=padding)(c20)
     u11 = concatenate([u11, c10])
     u11 = Dropout(dropout)(u11)
-    c11 = conv_block(u11, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+    c11 = conv_block(u11, n_filters * 2,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+
+    u02 = Conv2DTranspose(n_filters * 1, (3, 3), strides=(2, 2), padding=padding)(c11)
+    u02 = concatenate([u02, c01, c00])
+    u02 = Dropout(dropout)(u02)
+    c02 = conv_block(u02, n_filters * 1,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm) 
     
-    u21 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c30)
+    print('Third Up Path')
+
+    u21 = Conv2DTranspose(n_filters * 4, (3, 3), strides=(2, 2), padding=padding)(c30)
     u21 = concatenate([u21, c20])
     u21 = Dropout(dropout)(u21)
-    c21 = conv_block(u21, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)   
-    
+    c21 = conv_block(u21, n_filters * 4,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)   
+
+    u12 = Conv2DTranspose(n_filters * 2, (3, 3), strides=(2, 2), padding=padding)(c21)
+    u12 = concatenate([u12, c11, c10])
+    u12 = Dropout(dropout)(u12)
+    c12 = conv_block(u12, n_filters * 2,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+
+    u03 = Conv2DTranspose(n_filters * 1, (3, 3), strides=(2, 2), padding=padding)(c12)
+    u03 = concatenate([u03, c02, c01, c00])
+    u03 = Dropout(dropout)(u03)
+    c03 = conv_block(u03, n_filters * 1,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+
+    print('Final Up Path')
+
     u31 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c40)
     u31 = concatenate([u31, c30])
     u31 = Dropout(dropout)(u31)
-    c31 = conv_block(u31, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)    
-    
-    #Third Diagonal
-    
-    u02 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c11)
-    u02 = concatenate([u02, c01])
-    u02 = Dropout(dropout)(u02)
-    c02 = conv_block(u02, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)        
+    c31 = conv_block(u31, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm) 
 
-    u12 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c21)
-    u12 = concatenate([u12, c11])
-    u12 = Dropout(dropout)(u12)
-    c12 = conv_block(u12, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
-    
-    u22 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c31)
-    u22 = concatenate([u22, c21])
+    u22 = Conv2DTranspose(n_filters * 4, (3, 3), strides=(2, 2), padding=padding)(c31)
+    u22 = concatenate([u22, c21, c20])
     u22 = Dropout(dropout)(u22)
-    c22 = conv_block(u22, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
-    
-    #Fourth Diagonal
-    
-    u03 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c12)
-    u03 = concatenate([u03, c02])
-    u03 = Dropout(dropout)(u03)
-    c03 = conv_block(u03, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
-    
-    u13 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c22)
-    u13 = concatenate([u13, c12])
+    c22 = conv_block(u22, n_filters * 4,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+
+    u13 = Conv2DTranspose(n_filters * 2, (3, 3), strides=(2, 2), padding=padding)(c22)
+    u13 = concatenate([u13, c12, c11, c10])
     u13 = Dropout(dropout)(u13)
-    c13 = conv_block(u13, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
-    
-    #Fifth Diagonal
-    
-    u04 = Conv2DTranspose(n_filters * 8, (3, 3), strides=(2, 2), padding=padding)(c13)
-    u04 = concatenate([u04, c03])
+    c13 = conv_block(u13, n_filters * 2,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)
+
+    u04 = Conv2DTranspose(n_filters * 1, (3, 3), strides=(2, 2), padding=padding)(c13)
+    u04 = concatenate([u04, c03, c02, c01, c00])
     u04 = Dropout(dropout)(u04)
-    c04 = conv_block(u04, n_filters * 8,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)  
+    c04 = conv_block(u04, n_filters * 1,  filter_size=3, activation='relu', pad=padding, batch_norm=batch_norm)  
 
     #Outputs
     
