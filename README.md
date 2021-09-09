@@ -15,10 +15,10 @@ seaborn==0.11.1
 <br />matplotlib==3.2.2
 <br />numpy==1.19.5
 <br />ipython==7.24.1
-<br />Pillow==8.2.0
+<br />Pillow==8.3.2
 <br />protobuf==3.17.3
 <br />scikit_learn==0.24.2
-<br />tensorflow==2.5.0
+<br />tensorflow==2.5.1
 ### Necessary to have high-RAM device (>12 GB) for SegNet .ipynb and U-net .py files
 ### For U-net/U-net++, there are .py files or .ipynb files to be used. 
 -.py files - run UNET.py within the UNET/folder. This is an example of running with color pixels as the reconstructed output
